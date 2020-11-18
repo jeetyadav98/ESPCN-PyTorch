@@ -3,7 +3,6 @@
 
 # DATA
 *.csv
-*.txt
 *.h5
 *.pth
 data/
