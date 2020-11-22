@@ -1,0 +1,16 @@
+# Configuration file ESPCN 
+
+training:
+
+  training file: 'data/datasets/91-image_x3.h5'
+  eval file: 'data/datasets/Set5_x3.h5'
+  output dir: 'data/weights'
+
+  scale: 3
+  lr: 1e-3
+  batch size: 16
+  number of epochs: 200
+  number of workers: 8
+  seed: 123
+
+  
