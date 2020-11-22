@@ -16,7 +16,7 @@ from utils import convert_ycbcr_to_rgb, preprocess, calc_psnr
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights-file', type=str, required=True)
-    # parser.add_argument('--image-file', type=str, required=True)
+    parser.add_argument('--video-file', type=str, required=True)
     parser.add_argument('--scale', type=int, default=3)
     args = parser.parse_args()
 
@@ -33,8 +33,9 @@ if __name__ == '__main__':
             raise KeyError(n)
 
     model.eval()
-    ####################
-    video_name= 'data/vid1.mp4'
+
+    ################
+    video_name= args.video_file
     videoCapture= cv2.VideoCapture(video_name)
 
     if (videoCapture.isOpened()== False): 
@@ -44,10 +45,14 @@ if __name__ == '__main__':
     width= (int(videoCapture.get(cv2.CAP_PROP_FRAME_WIDTH))// args.scale )*args.scale 
     height= (int(videoCapture.get(cv2.CAP_PROP_FRAME_HEIGHT))//args.scale )*args.scale
 
-    output_name = 'data/testvid.avi'
-    videoWriter = cv2.VideoWriter(output_name, cv2.VideoWriter_fourcc(*'MPEG'), fps, (width, height))
+    # Constructing videowriter objects for bicubic and espcn outputs
+    espcn_out_name = args.video_file.replace('.','_espcn_x{}.'.format(args.scale))
+    espcn_videoWriter = cv2.VideoWriter(espcn_out_name, cv2.VideoWriter_fourcc(*'MPEG'), fps, (width, height))
 
-    # image = pil_image.open(args.image_file).convert('RGB')
+    bic_out_name = args.video_file.replace('.','_bicubic_x{}.'.format(args.scale))
+    bic_videoWriter = cv2.VideoWriter(bic_out_name, cv2.VideoWriter_fourcc(*'MPEG'), fps, (width, height))
+
+    # Read frame from video
     success, frame = videoCapture.read()
 
     while success:
@@ -59,39 +64,34 @@ if __name__ == '__main__':
         hr = image.resize((image_width, image_height), resample=pil_image.BICUBIC)
         lr = hr.resize((hr.width // args.scale, hr.height // args.scale), resample=pil_image.BICUBIC)
         bicubic = lr.resize((lr.width * args.scale, lr.height * args.scale), resample=pil_image.BICUBIC)
-        # bicubic.save(args.image_file.replace('.', '_bicubic_x{}.'.format(args.scale)))
 
-        lr, _ = preprocess(lr, device)
         hr, _ = preprocess(hr, device)
+        lr, _ = preprocess(lr, device)
         bc, _ = preprocess(bicubic, device)
         _, ycbcr = preprocess(bicubic, device)
 
         with torch.no_grad():
-            preds = model(lr).clamp(0.0, 1.0)
+            espcn_out = model(lr).clamp(0.0, 1.0)
 
-        psnr1 = calc_psnr(hr, preds)
-        print('PSNR SR: {:.2f}'.format(psnr1))
+        # Printing PSNR Values
+        psnr1 = calc_psnr(hr, espcn_out)
+        print('PSNR ESPCN  : {:.2f}'.format(psnr1))
 
         psnr2 = calc_psnr(hr, bc)
-        print('PSNR Bicubic: {:.2f}'.format(psnr2))
+        print('PSNR Bicubic: {:.2f}\n'.format(psnr2))
 
-        preds = preds.mul(255.0).cpu().numpy().squeeze(0).squeeze(0)
+        espcn_out = espcn_out.mul(255.0).cpu().numpy().squeeze(0).squeeze(0)
 
-        output = np.array([preds, ycbcr[..., 1], ycbcr[..., 2]]).transpose([1, 2, 0])
+        output = np.array([espcn_out, ycbcr[..., 1], ycbcr[..., 2]]).transpose([1, 2, 0])
         output = np.clip(convert_ycbcr_to_rgb(output), 0.0, 255.0).astype(np.uint8)
         output = pil_image.fromarray(output)
-        # output.save(args.image_file.replace('.', '_espcn_x{}.'.format(args.scale)))
-        out_img = cv2.cvtColor(np.asarray(output), cv2.COLOR_RGB2BGR)
+        
+        # Saving frames to bicubic, espcn videos
+        espcn_img = cv2.cvtColor(np.asarray(output), cv2.COLOR_RGB2BGR)
+        bic_img = cv2.cvtColor(np.asarray(bicubic), cv2.COLOR_RGB2BGR)
 
-        videoWriter.write(out_img)
+        espcn_videoWriter.write(espcn_img)
+        bic_videoWriter.write(bic_img)
+        
         # next frame
         success, frame = videoCapture.read()
-        
-        hr = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)).convert('YCbCr')
-        image_width = (hr.width // 3) * 3
-        image_height = (hr.height // 3) * 3
-
-        hr = hr.resize((image_width, image_height), resample=pil_image.BICUBIC)
-
-        y1, cb1, cr1 = hr.split()
-        hr_image = Variable(ToTensor()(y1)).view(1, -1, y1.size[1], y1.size[0])
