@@ -32,7 +32,9 @@ def training(dict_train):
         os.makedirs(outputs_dir)
 
     cudnn.benchmark = True
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    
+    # device = torch.device('cuda:0')
+    device = torch.device('cpu')
 
     torch.manual_seed(seed)
 

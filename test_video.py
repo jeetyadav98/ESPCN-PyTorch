@@ -20,7 +20,9 @@ def testing_video(dict_video):
     scale= dict_video['scale']
 
     cudnn.benchmark = True
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    
+    # device = torch.device('cuda:0')
+    device = torch.device('cpu')
 
     model = ESPCN(scale_factor=scale).to(device)
 

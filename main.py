@@ -38,6 +38,9 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--config-file', dest= 'config_file', default='config.yaml', action='store_true', help= 'path to configuration file')
     args = parser.parse_args()
 
+    if not (args.train or args.test_image or args.test_video):
+        print('Please provide argument to train/test')
+
     with open(args.config_file) as f:
         config_dict = yaml.safe_load(f)
 
