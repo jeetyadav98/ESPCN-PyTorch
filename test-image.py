@@ -40,19 +40,24 @@ if __name__ == '__main__':
     bicubic = lr.resize((lr.width * args.scale, lr.height * args.scale), resample=pil_image.BICUBIC)
     bicubic.save(args.image_file.replace('.', '_bicubic_x{}.'.format(args.scale)))
 
-    lr, _ = preprocess(lr, device)
     hr, _ = preprocess(hr, device)
+    lr, _ = preprocess(lr, device)
+    bc, _ = preprocess(bicubic, device)
     _, ycbcr = preprocess(bicubic, device)
 
     with torch.no_grad():
-        preds = model(lr).clamp(0.0, 1.0)
+        espcn_out = model(lr).clamp(0.0, 1.0)
 
-    psnr = calc_psnr(hr, preds)
-    print('PSNR: {:.2f}'.format(psnr))
+    # Printing PSNR Values
+    psnr1 = calc_psnr(hr, espcn_out)
+    print('\nPSNR ESPCN  : {:.2f}'.format(psnr1))
 
-    preds = preds.mul(255.0).cpu().numpy().squeeze(0).squeeze(0)
+    psnr2 = calc_psnr(hr, bc)
+    print('PSNR Bicubic: {:.2f}\n'.format(psnr2))
 
-    output = np.array([preds, ycbcr[..., 1], ycbcr[..., 2]]).transpose([1, 2, 0])
+    espcn_out = espcn_out.mul(255.0).cpu().numpy().squeeze(0).squeeze(0)
+
+    output = np.array([espcn_out, ycbcr[..., 1], ycbcr[..., 2]]).transpose([1, 2, 0])
     output = np.clip(convert_ycbcr_to_rgb(output), 0.0, 255.0).astype(np.uint8)
     output = pil_image.fromarray(output)
     output.save(args.image_file.replace('.', '_espcn_x{}.'.format(args.scale)))
