@@ -13,20 +13,19 @@ from models import ESPCN
 from utils import convert_ycbcr_to_rgb, preprocess, calc_psnr
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--weights-file', type=str, required=True)
-    parser.add_argument('--video-file', type=str, required=True)
-    parser.add_argument('--scale', type=int, default=3)
-    args = parser.parse_args()
+def testing_video(dict_video):
+
+    weights_file= dict_video['weights file']
+    video_file= dict_video['video file']
+    scale= dict_video['scale']
 
     cudnn.benchmark = True
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    model = ESPCN(scale_factor=args.scale).to(device)
+    model = ESPCN(scale_factor=scale).to(device)
 
     state_dict = model.state_dict()
-    for n, p in torch.load(args.weights_file, map_location=lambda storage, loc: storage).items():
+    for n, p in torch.load(weights_file, map_location=lambda storage, loc: storage).items():
         if n in state_dict.keys():
             state_dict[n].copy_(p)
         else:
@@ -35,21 +34,21 @@ if __name__ == '__main__':
     model.eval()
 
     ################
-    video_name= args.video_file
+    video_name= video_file
     videoCapture= cv2.VideoCapture(video_name)
 
     if (videoCapture.isOpened()== False): 
         print("Error opening video stream or file")
 
     fps = videoCapture.get(cv2.CAP_PROP_FPS)
-    width= (int(videoCapture.get(cv2.CAP_PROP_FRAME_WIDTH))// args.scale )*args.scale 
-    height= (int(videoCapture.get(cv2.CAP_PROP_FRAME_HEIGHT))//args.scale )*args.scale
+    width= (int(videoCapture.get(cv2.CAP_PROP_FRAME_WIDTH))// scale )*scale 
+    height= (int(videoCapture.get(cv2.CAP_PROP_FRAME_HEIGHT))//scale )*scale
 
     # Constructing videowriter objects for bicubic and espcn outputs
-    espcn_out_name = args.video_file.replace('.','_espcn_x{}.'.format(args.scale))
+    espcn_out_name = video_file.replace('.','_espcn_x{}.'.format(scale))
     espcn_videoWriter = cv2.VideoWriter(espcn_out_name, cv2.VideoWriter_fourcc(*'MPEG'), fps, (width, height))
 
-    bic_out_name = args.video_file.replace('.','_bicubic_x{}.'.format(args.scale))
+    bic_out_name = video_file.replace('.','_bicubic_x{}.'.format(scale))
     bic_videoWriter = cv2.VideoWriter(bic_out_name, cv2.VideoWriter_fourcc(*'MPEG'), fps, (width, height))
 
     # Read frame from video
@@ -58,12 +57,12 @@ if __name__ == '__main__':
     while success:
         image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)).convert('RGB')
 
-        image_width = (image.width // args.scale) * args.scale
-        image_height = (image.height // args.scale) * args.scale
+        image_width = (image.width // scale) * scale
+        image_height = (image.height // scale) * scale
 
         hr = image.resize((image_width, image_height), resample=pil_image.BICUBIC)
-        lr = hr.resize((hr.width // args.scale, hr.height // args.scale), resample=pil_image.BICUBIC)
-        bicubic = lr.resize((lr.width * args.scale, lr.height * args.scale), resample=pil_image.BICUBIC)
+        lr = hr.resize((hr.width // scale, hr.height // scale), resample=pil_image.BICUBIC)
+        bicubic = lr.resize((lr.width * scale, lr.height * scale), resample=pil_image.BICUBIC)
 
         hr, _ = preprocess(hr, device)
         lr, _ = preprocess(lr, device)

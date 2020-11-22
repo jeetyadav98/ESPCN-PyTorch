@@ -13,4 +13,12 @@ training:
   number of workers: 8
   seed: 123
 
-  
+test image:
+  weights file: 'data/weights/x3/best.pth'
+  image file: 'data/images/baboon.bmp'
+  scale: 3
+
+test video:
+  weights file: 'data/weights/x3/best.pth'
+  video file: 'data/videos/vid1.mp4'
+  scale: 3
