@@ -41,8 +41,8 @@ if __name__ == '__main__':
         print("Error opening video stream or file")
 
     fps = videoCapture.get(cv2.CAP_PROP_FPS)
-    width= int(videoCapture.get(cv2.CAP_PROP_FRAME_WIDTH))*args.scale 
-    height= int(videoCapture.get(cv2.CAP_PROP_FRAME_HEIGHT))*args.scale
+    width= (int(videoCapture.get(cv2.CAP_PROP_FRAME_WIDTH))// args.scale )*args.scale 
+    height= (int(videoCapture.get(cv2.CAP_PROP_FRAME_HEIGHT))//args.scale )*args.scale
 
     output_name = 'data/testvid.avi'
     videoWriter = cv2.VideoWriter(output_name, cv2.VideoWriter_fourcc(*'MPEG'), fps, (width, height))
@@ -85,7 +85,21 @@ if __name__ == '__main__':
         # videoWriter.write(out_img)
         #     # next frame
         # success, frame = videoCapture.read()
-        img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)).convert('YCbCr')
+        
+        hr = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)).convert('YCbCr')
+        image_width = (hr.width // 3) * 3
+        image_height = (hr.height // 3) * 3
+
+        hr = hr.resize((image_width, image_height), resample=pil_image.BICUBIC)
+
+        y1, cb1, cr1 = hr.split()
+        hr_image = Variable(ToTensor()(y1)).view(1, -1, y1.size[1], y1.size[0])
+
+
+
+        img = hr.resize((hr.width // 3, hr.height // 3), resample=pil_image.BICUBIC)
+        
+        # img = Image.fromarray(cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)).convert('YCbCr')
         y, cb, cr = img.split()
         image = Variable(ToTensor()(y)).view(1, -1, y.size[1], y.size[0])
         if torch.cuda.is_available():
@@ -102,6 +116,11 @@ if __name__ == '__main__':
         out_img = Image.merge('YCbCr', [out_img_y, out_img_cb, out_img_cr]).convert('RGB')
         out_img = cv2.cvtColor(np.asarray(out_img), cv2.COLOR_RGB2BGR)
 
+        # print('-----------------')
+        # print(hr_image.size())
+        # print('-----------------')
+        psnr = calc_psnr(out, hr_image)
+        print('PSNR: {:.2f}'.format(psnr))
         # if IS_REAL_TIME:
         #     cv2.imshow('LR Video ', frame)
         #     cv2.imshow('SR Video ', out_img)
