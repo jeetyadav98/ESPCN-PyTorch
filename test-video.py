@@ -51,40 +51,41 @@ if __name__ == '__main__':
     success, frame = videoCapture.read()
 
     while success:
-        # image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)).convert('RGB')
+        image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)).convert('RGB')
 
-        # image_width = (image.width // args.scale) * args.scale
-        # image_height = (image.height // args.scale) * args.scale
+        image_width = (image.width // args.scale) * args.scale
+        image_height = (image.height // args.scale) * args.scale
 
-        # hr = image.resize((image_width, image_height), resample=pil_image.BICUBIC)
-        # lr = hr.resize((hr.width // args.scale, hr.height // args.scale), resample=pil_image.BICUBIC)
-        # bicubic = lr.resize((lr.width * args.scale, lr.height * args.scale), resample=pil_image.BICUBIC)
-        # # bicubic.save(args.image_file.replace('.', '_bicubic_x{}.'.format(args.scale)))
+        hr = image.resize((image_width, image_height), resample=pil_image.BICUBIC)
+        lr = hr.resize((hr.width // args.scale, hr.height // args.scale), resample=pil_image.BICUBIC)
+        bicubic = lr.resize((lr.width * args.scale, lr.height * args.scale), resample=pil_image.BICUBIC)
+        # bicubic.save(args.image_file.replace('.', '_bicubic_x{}.'.format(args.scale)))
 
-        # lr, _ = preprocess(lr, device)
-        # hr, _ = preprocess(hr, device)
-        # _, ycbcr = preprocess(bicubic, device)
+        lr, _ = preprocess(lr, device)
+        hr, _ = preprocess(hr, device)
+        bc, _ = preprocess(bicubic, device)
+        _, ycbcr = preprocess(bicubic, device)
 
-        # with torch.no_grad():
-        #     preds = model(lr).clamp(0.0, 1.0)
+        with torch.no_grad():
+            preds = model(lr).clamp(0.0, 1.0)
 
-        # psnr1 = calc_psnr(hr, preds)
-        # print('PSNR SR: {:.2f}'.format(psnr1))
+        psnr1 = calc_psnr(hr, preds)
+        print('PSNR SR: {:.2f}'.format(psnr1))
 
-        # # psnr2 = calc_psnr(hr, bicubic)
-        # # print('PSNR Bicubic: {:.2f}'.format(psnr2))
+        psnr2 = calc_psnr(hr, bc)
+        print('PSNR Bicubic: {:.2f}'.format(psnr2))
 
-        # preds = preds.mul(255.0).cpu().numpy().squeeze(0).squeeze(0)
+        preds = preds.mul(255.0).cpu().numpy().squeeze(0).squeeze(0)
 
-        # output = np.array([preds, ycbcr[..., 1], ycbcr[..., 2]]).transpose([1, 2, 0])
-        # output = np.clip(convert_ycbcr_to_rgb(output), 0.0, 255.0).astype(np.uint8)
-        # output = pil_image.fromarray(output)
-        # # output.save(args.image_file.replace('.', '_espcn_x{}.'.format(args.scale)))
-        # out_img = cv2.cvtColor(np.asarray(output), cv2.COLOR_RGB2BGR)
+        output = np.array([preds, ycbcr[..., 1], ycbcr[..., 2]]).transpose([1, 2, 0])
+        output = np.clip(convert_ycbcr_to_rgb(output), 0.0, 255.0).astype(np.uint8)
+        output = pil_image.fromarray(output)
+        # output.save(args.image_file.replace('.', '_espcn_x{}.'.format(args.scale)))
+        out_img = cv2.cvtColor(np.asarray(output), cv2.COLOR_RGB2BGR)
 
-        # videoWriter.write(out_img)
-        #     # next frame
-        # success, frame = videoCapture.read()
+        videoWriter.write(out_img)
+        # next frame
+        success, frame = videoCapture.read()
         
         hr = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)).convert('YCbCr')
         image_width = (hr.width // 3) * 3
@@ -94,39 +95,3 @@ if __name__ == '__main__':
 
         y1, cb1, cr1 = hr.split()
         hr_image = Variable(ToTensor()(y1)).view(1, -1, y1.size[1], y1.size[0])
-
-
-
-        img = hr.resize((hr.width // 3, hr.height // 3), resample=pil_image.BICUBIC)
-        
-        # img = Image.fromarray(cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)).convert('YCbCr')
-        y, cb, cr = img.split()
-        image = Variable(ToTensor()(y)).view(1, -1, y.size[1], y.size[0])
-        if torch.cuda.is_available():
-            image = image.cuda()
-
-        out = model(image)
-        out = out.cpu()
-        out_img_y = out.data[0].numpy()
-        out_img_y *= 255.0
-        out_img_y = out_img_y.clip(0, 255)
-        out_img_y = Image.fromarray(np.uint8(out_img_y[0]), mode='L')
-        out_img_cb = cb.resize(out_img_y.size, Image.BICUBIC)
-        out_img_cr = cr.resize(out_img_y.size, Image.BICUBIC)
-        out_img = Image.merge('YCbCr', [out_img_y, out_img_cb, out_img_cr]).convert('RGB')
-        out_img = cv2.cvtColor(np.asarray(out_img), cv2.COLOR_RGB2BGR)
-
-        # print('-----------------')
-        # print(hr_image.size())
-        # print('-----------------')
-        psnr = calc_psnr(out, hr_image)
-        print('PSNR: {:.2f}'.format(psnr))
-        # if IS_REAL_TIME:
-        #     cv2.imshow('LR Video ', frame)
-        #     cv2.imshow('SR Video ', out_img)
-        #     cv2.waitKey(DELAY_TIME)
-        # else:
-            # save video
-        videoWriter.write(out_img)
-        # next frame
-        success, frame = videoCapture.read()
