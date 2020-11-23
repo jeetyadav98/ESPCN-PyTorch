@@ -26,4 +26,6 @@ test video:
   video dir: 'data/videos'
   #name inside video dir : file mode - process one file  
   video file: 'vid1.mp4'
-  
+
+visualize filters:
+  weights file: 'data/weights/x3/best.pth'

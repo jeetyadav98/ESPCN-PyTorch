@@ -4,6 +4,7 @@ import copy
 import sys
 
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 from torch import nn
 import torch.optim as optim
@@ -11,6 +12,8 @@ import torch.backends.cudnn as cudnn
 from torch.utils.data.dataloader import DataLoader
 from tqdm import tqdm
 import yaml
+
+from math import sqrt
 
 from source.models import ESPCN
 from source.datasets import TrainDataset, EvalDataset
@@ -48,14 +51,17 @@ def visualize_filters(weights_file):
     out_path= 'data/visualize_filters'
     if not os.path.exists(out_path):
         os.makedirs(out_path)
-
+    
+    sizes= [(8,8), (4,8), (3,3)]
+    k_sizes= [5,3,3]
     plt.figure(figsize=(20, 17))
     for n in range(len(model_weights)):
         for i, filter in enumerate(model_weights[n]):
-            plt.subplot(8, 8, i+1)
+            plt.subplot(sizes[n][0], sizes[n][1], i+1)
             plt.imshow(filter[0, :, :].detach(), cmap='gray')
             plt.axis('off')
-            plt.savefig('data/visualize_filters/filter'+str(n)+'.png')
+        plt.suptitle('Convolutional Layer ' + str(n+1) + ': Filter visualization', fontsize=40)
+        plt.savefig('data/visualize_filters/filter'+str(n+1)+'.png')
         plt.clf()
     print('Filter images saved to data/visualize_filters')
     sys.exit()
@@ -84,7 +90,7 @@ if __name__ == "__main__":
         config_dict = yaml.safe_load(f)
 
     printconfig(config_dict) if args.print_config else None
-    visualize_filters(config_dict['test image']['weights file']) if args.vis_filters else None
+    visualize_filters(config_dict['visualize filters']['weights file']) if args.vis_filters else None
 
     if not (args.train or args.test_image or args.test_video):
         print('Please provide argument to train/test')
