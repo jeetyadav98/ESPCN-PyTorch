@@ -6,15 +6,19 @@ import numpy as np
 import PIL.Image as pil_image
 
 from source.models import ESPCN
-from source.utils import convert_ycbcr_to_rgb, preprocess, calc_psnr
+from source.utils import convert_ycbcr_to_rgb, preprocess, calc_psnr, is_image_file
+from os import listdir
+import os
 
 
-def testing_image(dict_image):
+def testing_image(dict_image, batch_mode):
 
     weights_file= dict_image['weights file']
-    image_file= dict_image['image file']
     scale= dict_image['scale']
-
+    image_dir= dict_image['image dir']
+    
+    image_file= dict_image['image file'] if not batch_mode else None
+        
     cudnn.benchmark = True
     
     # device = torch.device('cuda:0')
@@ -31,34 +35,51 @@ def testing_image(dict_image):
 
     model.eval()
 
-    image = pil_image.open(image_file).convert('RGB')
+    ###########################
+    if not batch_mode:
+        images= [image_file]
+    else:
+        images = [x for x in listdir(image_dir) if is_image_file(x)]
+    
+    out_path = image_dir + '_x{}/'.format(scale)
+    if not os.path.exists(out_path):
+        os.makedirs(out_path)
 
-    image_width = (image.width // scale) * scale
-    image_height = (image.height // scale) * scale
+    for image_name in images:
+        image = pil_image.open(image_dir + '/'+ image_name).convert('RGB')
 
-    hr = image.resize((image_width, image_height), resample=pil_image.BICUBIC)
-    lr = hr.resize((hr.width // scale, hr.height // scale), resample=pil_image.BICUBIC)
-    bicubic = lr.resize((lr.width * scale, lr.height * scale), resample=pil_image.BICUBIC)
-    bicubic.save(image_file.replace('.', '_bicubic_x{}.'.format(scale)))
+        image_width = (image.width // scale) * scale
+        image_height = (image.height // scale) * scale
 
-    hr, _ = preprocess(hr, device)
-    lr, _ = preprocess(lr, device)
-    bc, _ = preprocess(bicubic, device)
-    _, ycbcr = preprocess(bicubic, device)
+        hr = image.resize((image_width, image_height), resample=pil_image.BICUBIC)
+        lr = hr.resize((hr.width // scale, hr.height // scale), resample=pil_image.BICUBIC)
+        bicubic = lr.resize((lr.width * scale, lr.height * scale), resample=pil_image.BICUBIC)
 
-    with torch.no_grad():
-        espcn_out = model(lr).clamp(0.0, 1.0)
+        hr, _ = preprocess(hr, device)
+        lr, _ = preprocess(lr, device)
+        bc, _ = preprocess(bicubic, device)
+        _, ycbcr = preprocess(bicubic, device)
 
-    # Printing PSNR Values
-    psnr1 = calc_psnr(hr, espcn_out)
-    print('\nPSNR ESPCN  : {:.2f}'.format(psnr1))
+        with torch.no_grad():
+            espcn_out = model(lr).clamp(0.0, 1.0)
 
-    psnr2 = calc_psnr(hr, bc)
-    print('PSNR Bicubic: {:.2f}\n'.format(psnr2))
+        # Printing PSNR Values
+        print(image_name)
+        espcn_psnr = calc_psnr(hr, espcn_out)
+        print('PSNR ESPCN  : {:.2f}'.format(espcn_psnr))
 
-    espcn_out = espcn_out.mul(255.0).cpu().numpy().squeeze(0).squeeze(0)
+        bc_psnr = calc_psnr(hr, bc)
+        print('PSNR Bicubic: {:.2f}\n'.format(bc_psnr))
 
-    output = np.array([espcn_out, ycbcr[..., 1], ycbcr[..., 2]]).transpose([1, 2, 0])
-    output = np.clip(convert_ycbcr_to_rgb(output), 0.0, 255.0).astype(np.uint8)
-    output = pil_image.fromarray(output)
-    output.save(image_file.replace('.', '_espcn_x{}.'.format(scale)))
+        espcn_out = espcn_out.mul(255.0).cpu().numpy().squeeze(0).squeeze(0)
+
+        output = np.array([espcn_out, ycbcr[..., 1], ycbcr[..., 2]]).transpose([1, 2, 0])
+        output = np.clip(convert_ycbcr_to_rgb(output), 0.0, 255.0).astype(np.uint8)
+        output = pil_image.fromarray(output)
+
+        # Saving bicubic, espcn outputs
+        bc_out= image_name.replace('.', '_bicubic_x{}.'.format(scale))
+        espcn_out= image_name.replace('.', '_espcn_x{}.'.format(scale))
+
+        bicubic.save(out_path+bc_out)
+        output.save(out_path+espcn_out)

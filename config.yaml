@@ -15,10 +15,15 @@ training:
 
 test image:
   weights file: 'data/weights/x3/best.pth'
-  image file: 'data/images/baboon.bmp'
   scale: 3
-
+  image dir: 'data/images'
+  # name inside images dir : file mode - process one file
+  image file: 'baboon.bmp'
+  
 test video:
   weights file: 'data/weights/x3/best.pth'
-  video file: 'data/videos/vid1.mp4'
   scale: 3
+  video dir: 'data/videos'
+  #name inside video dir : file mode - process one file  
+  video file: 'vid1.mp4'
+  
