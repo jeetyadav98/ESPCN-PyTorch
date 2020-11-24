@@ -7,8 +7,14 @@ from source.utils import convert_rgb_to_y
 
 
 def train(args):
-    h5_file = h5py.File(args.output_path, 'w')
+    """ Write and save train dataset
 
+    :param args: arparser input
+    :returns: None
+
+    """
+
+    h5_file = h5py.File(args.output_path, 'w')
     lr_patches = []
     hr_patches = []
 
@@ -37,7 +43,13 @@ def train(args):
     h5_file.close()
 
 
-def eval(args):
+def val(args):
+    """ Write and save eval dataset
+
+    :param args: arparser input
+    :returns: None
+
+    """
     h5_file = h5py.File(args.output_path, 'w')
 
     lr_group = h5_file.create_group('lr')
@@ -61,16 +73,22 @@ def eval(args):
 
 
 if __name__ == '__main__':
+    """ Prepares data sets for training in .h5 format
+
+    This script converts multi file data sets in a single .h5 file for training. Train and eval datasets are both supposed to be in .h5 format. The argparser takes command line arguments to prepare the datasets. As compared to main, this takes the config values from the command line itself, due to the one-time nature of this operation. 
+
+    :returns: None
+
+    """
+
+    # Initialize argparser
     parser = argparse.ArgumentParser()
-    parser.add_argument('--images-dir', type=str, required=True)
-    parser.add_argument('--output-path', type=str, required=True)
-    parser.add_argument('--scale', type=int, default=3)
-    parser.add_argument('--patch-size', type=int, default=17)
-    parser.add_argument('--stride', type=int, default=13)
-    parser.add_argument('--eval', action='store_true')
+    parser.add_argument('--images-dir', type=str, required=True, help= 'path to images directory')
+    parser.add_argument('--output-path', type=str, required=True, help= 'path to output file')
+    parser.add_argument('--scale', type=int, default=3, help= 'super resolution scale factor')
+    parser.add_argument('--patch-size', type=int, default=17, help= 'patch size')
+    parser.add_argument('--stride', type=int, default=13, help= 'stride')
+    parser.add_argument('--eval', action='store_true', help= 'eval dataset')
     args = parser.parse_args()
 
-    if not args.eval:
-        train(args)
-    else:
-        eval(args)
+    val(args) if args.eval else train(args)

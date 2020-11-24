@@ -108,19 +108,6 @@ def is_video_file(filename):
 
     return any(filename.endswith(extension) for extension in ['.mp4', '.avi', '.mpg', '.mkv', '.wmv', '.flv'])
 
-def calc_patch_size(func):
-    def wrapper(args):
-        if args.scale == 2:
-            args.patch_size = 10
-        elif args.scale == 3:
-            args.patch_size = 7
-        elif args.scale == 4:
-            args.patch_size = 6
-        else:
-            raise Exception('Scale Error', args.scale)
-        return func(args)
-    return wrapper
-
 
 def convert_rgb_to_y(img, dim_order='hwc'):
     """ Get Y(CbCr) value from RGB image (standard conversion)
@@ -210,15 +197,21 @@ class AverageMeter(object):
     """
 
     def __init__(self):
+        """ Constructor
+        """
         self.reset()
 
     def reset(self):
+        """ Reset to zero
+        """
         self.val = 0
         self.avg = 0
         self.sum = 0
         self.count = 0
 
     def update(self, val, n=1):
+        """ Update and compute val, sum, count, avg
+        """
         self.val = val
         self.sum += val * n
         self.count += n

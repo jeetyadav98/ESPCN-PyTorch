@@ -16,10 +16,7 @@ class ESPCN(nn.Module):
 
         super(ESPCN, self).__init__()
         self.first_part = self.get_first_part(scale_factor, num_channels)
-        self.last_part = nn.Sequential(
-            nn.Conv2d(32, num_channels * (scale_factor ** 2), kernel_size=3, padding=3 // 2),
-            nn.PixelShuffle(scale_factor)
-        )
+        self.last_part = self.get_last_part(scale_factor, num_channels)
         self._initialize_weights()
 
     def _initialize_weights(self):
@@ -59,18 +56,22 @@ class ESPCN(nn.Module):
 
         """
 
-        x=  nn.Sequential(nn.Conv2d(num_channels, 64, kernel_size=5, padding=5//2),
+        x=  nn.Sequential(
+            nn.Conv2d(num_channels, 64, kernel_size=5, padding=5//2),
             nn.Tanh(),
             nn.Conv2d(64, 32, kernel_size=3, padding=3//2),
             nn.Tanh(),
             )
         return x
-    
-    # def get_last_part(self, scale_factor, num_channels):
-    #      """ Get last part of the network
 
-    #     :return: nn.Sequential
+    def get_last_part(self, scale_factor, num_channels):
+        """ Get last part of the network
 
-    #     """
-    #     x= nn.Sequential(nn.Conv2d(32, num_channels * (scale_factor **2), kernel_size=3, padding=3 // 2), nn.PixelShuffle(scale_factor) )
-    #     return x
+        :return: nn.Sequential
+
+        """
+        x=  nn.Sequential(
+            nn.Conv2d(32, num_channels * (scale_factor **2), kernel_size=3, padding=3 // 2),
+            nn.PixelShuffle(scale_factor)
+            )
+        return x
