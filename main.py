@@ -17,63 +17,12 @@ from math import sqrt
 
 from source.models import ESPCN
 from source.datasets import TrainDataset, EvalDataset
-from source.utils import AverageMeter, calc_psnr
+from source.utils import AverageMeter, calc_psnr, visualize_filters, printconfig
 
 from source.train import training
 from source.test_image import testing_image
 from source.test_video import testing_video
 
-
-def visualize_filters(weights_file):
-    device = torch.device('cpu')
-    model = ESPCN(scale_factor=3)
-
-    state_dict = model.state_dict()
-    for n, p in torch.load(weights_file, map_location=lambda storage, loc: storage).items():
-        if n in state_dict.keys():
-            state_dict[n].copy_(p)
-        else:
-            raise KeyError(n)
-
-    model_weights= []   # To store weights
-    conv_layers= []     # To store the conv2d layers
-
-    model_children= list(model.children())
-    counter = 0 
-    for i in range(len(model_children)):
-        for j in range(len(model_children[i])):
-            child= model_children[i][j]
-            if type(child) == nn.Conv2d:
-                counter += 1
-                model_weights.append(child.weight)
-                conv_layers.append(child)
-
-    out_path= 'data/visualize_filters'
-    if not os.path.exists(out_path):
-        os.makedirs(out_path)
-    
-    sizes= [(8,8), (4,8), (3,3)]
-    k_sizes= [5,3,3]
-    plt.figure(figsize=(20, 17))
-    for n in range(len(model_weights)):
-        for i, filter in enumerate(model_weights[n]):
-            plt.subplot(sizes[n][0], sizes[n][1], i+1)
-            plt.imshow(filter[0, :, :].detach(), cmap='gray')
-            plt.axis('off')
-        plt.suptitle('Convolutional Layer ' + str(n+1) + ': Filter visualization', fontsize=40)
-        plt.savefig('data/visualize_filters/filter'+str(n+1)+'.png')
-        plt.clf()
-    print('Filter images saved to data/visualize_filters')
-    sys.exit()
-
-def printconfig(config_dict):
-    print('\nConfiguration parameters-\n')
-    for i in config_dict:
-        print(i,':')
-        for key in config_dict[i]:
-            print('  ',key, ':', config_dict[i][key])
-        print()
-    sys.exit()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='ESPCN')
@@ -83,7 +32,7 @@ if __name__ == "__main__":
     parser.add_argument('-im','--test-image', dest= 'test_image', default=None, action='store_true', help= 'test an image using ESPCN')
     parser.add_argument('-vi','--test-video', dest= 'test_video', default=None, action='store_true', help= 'test a video using ESPCN')
     parser.add_argument('-b','--batch', dest= 'batch_mode', default=None, action='store_true', help= 'process entire directory of images/videos')
-    parser.add_argument('-v','--vis-filters', dest= 'vis_filters', default=None, action='store_true', help= 'visualize filters of each conv layer')
+    parser.add_argument('-f','--filters-vis', dest= 'filters_vis', default=None, action='store_true', help= 'visualize filters of each conv layer')
     parser.add_argument('-p','--plot', dest= 'plot', default=None, action='store_true', help= 'plot psnr for image batches or videos')
     args = parser.parse_args()
     
@@ -91,7 +40,7 @@ if __name__ == "__main__":
         config_dict = yaml.safe_load(f)
 
     printconfig(config_dict) if args.print_config else None
-    visualize_filters(config_dict['visualize filters']['weights file']) if args.vis_filters else None
+    visualize_filters(config_dict['visualize filters']) if args.filters_vis else None
 
     if not (args.train or args.test_image or args.test_video):
         print('Please provide argument to train/test')

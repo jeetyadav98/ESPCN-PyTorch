@@ -29,3 +29,4 @@ test video:
 
 visualize filters:
   weights file: 'data/weights/x3/best.pth'
+  scale: 3

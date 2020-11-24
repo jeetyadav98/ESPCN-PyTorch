@@ -1,5 +1,74 @@
-import torch
+import os
+import copy
+import sys
+
+import matplotlib.pyplot as plt
 import numpy as np
+import torch
+from torch import nn
+import torch.optim as optim
+import torch.backends.cudnn as cudnn
+from torch.utils.data.dataloader import DataLoader
+from tqdm import tqdm
+import yaml
+
+from source.models import ESPCN
+
+
+def printconfig(config_dict):
+    print('\nConfiguration parameters-\n')
+    for i in config_dict:
+        print(i,':')
+        for key in config_dict[i]:
+            print('  ',key, ':', config_dict[i][key])
+        print()
+    sys.exit()
+
+
+def visualize_filters(dict_vis):
+    weights_file= dict_vis['weights file']
+    scale= dict_vis['scale']
+    
+    device = torch.device('cpu')
+    model = ESPCN(scale_factor=scale)
+
+    state_dict = model.state_dict()
+    for n, p in torch.load(weights_file, map_location=lambda storage, loc: storage).items():
+        if n in state_dict.keys():
+            state_dict[n].copy_(p)
+        else:
+            raise KeyError(n)
+
+    model_weights= []   # To store weights
+    conv_layers= []     # To store the conv2d layers
+
+    model_children= list(model.children())
+    counter = 0 
+    for i in range(len(model_children)):
+        for j in range(len(model_children[i])):
+            child= model_children[i][j]
+            if type(child) == nn.Conv2d:
+                counter += 1
+                model_weights.append(child.weight)
+                conv_layers.append(child)
+
+    out_path= 'data/visualize_filters'
+    if not os.path.exists(out_path):
+        os.makedirs(out_path)
+    
+    sizes= [(8,8), (4,8), (3,3)]
+    k_sizes= [5,3,3]
+    plt.figure(figsize=(20, 17))
+    for n in range(len(model_weights)):
+        for i, filter in enumerate(model_weights[n]):
+            plt.subplot(sizes[n][0], sizes[n][1], i+1)
+            plt.imshow(filter[0, :, :].detach(), cmap='gray')
+            plt.axis('off')
+        plt.suptitle('Convolutional Layer ' + str(n+1) + ': Filter visualization', fontsize=40)
+        plt.savefig('data/visualize_filters/filter'+str(n+1)+'.png')
+        plt.clf()
+    print('Filter images saved to data/visualize_filters')
+    sys.exit()
 
 
 def is_image_file(filename):
