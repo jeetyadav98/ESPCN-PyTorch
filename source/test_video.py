@@ -16,17 +16,27 @@ import os
 from os import listdir
 
 def testing_video(dict_video, batch_mode, psnr_plot):
+    """ Process video(s) through ESPCN
 
+    This function processes a video (file mode), or videos (batch mode) through ESPCN. Videos are processed frame by frame. These are first downscaled to lower resolution images. These are upscaled and saved using both (a) Bicubic interpolation and (b) ESPCN. The former is used for comparison. The function can optionally plot the PSNR values of each frame, corresponding to both Bicubic and ESPCN outputs for a video.
+
+    :param dict_video: dictionary for configuration values (scale, location of weights file...)
+    :param batch_mode: Boolean toggle; will process all images in 'image_dir' if True
+    :param psnr_plot: Boolean toggle; will plot and save Bicubic and ESPCN PSNR for a batch of images if True
+    :return: None
+
+    """
+
+    # Initialize configuration values from input dictionary
     weights_file= dict_video['weights file']
     scale= dict_video['scale']
     video_dir= dict_video['video dir']
 
     video_file= dict_video['video file'] if not batch_mode else None
 
-    cudnn.benchmark = True
-    
-    # device = torch.device('cuda:0')
-    device = torch.device('cpu')
+    # Initialize model in eval, load weights
+    cudnn.benchmark = True    
+    device = torch.device('cpu')    # OR device = torch.device('cuda:0')
 
     model = ESPCN(scale_factor=scale).to(device)
 
@@ -39,7 +49,7 @@ def testing_video(dict_video, batch_mode, psnr_plot):
 
     model.eval()
 
-    ################
+    # Identify input/output paths
     if not batch_mode:
         videos= [video_file]
     else:
@@ -49,6 +59,7 @@ def testing_video(dict_video, batch_mode, psnr_plot):
     if not os.path.exists(out_path):
         os.makedirs(out_path)
 
+    # Iterate over all videos (processed frame by frame)
     for video_name in videos:
     
         videoCapture= cv2.VideoCapture(video_dir + '/' +video_name)
@@ -56,6 +67,7 @@ def testing_video(dict_video, batch_mode, psnr_plot):
         if (videoCapture.isOpened()== False): 
             print("Error opening video stream or file")
 
+        # Get video metadata
         fps = videoCapture.get(cv2.CAP_PROP_FPS)
         width= (int(videoCapture.get(cv2.CAP_PROP_FRAME_WIDTH))// scale )*scale 
         height= (int(videoCapture.get(cv2.CAP_PROP_FRAME_HEIGHT))//scale )*scale
@@ -69,12 +81,13 @@ def testing_video(dict_video, batch_mode, psnr_plot):
         bic_out_name = video_name.replace('.','_bicubic_x{}.'.format(scale))
         bic_videoWriter = cv2.VideoWriter(out_path + bic_out_name, cv2.VideoWriter_fourcc(*'MPEG'), fps, (width, height))
 
-        # Read frame from video
+        # Read first frame from video, initialize arrays for PSNR values (per video)
         success, frame = videoCapture.read()
         espcn_psnr= np.zeros(frame_count)
         bc_psnr= np.zeros(frame_count)
         count= 0
 
+        # Iterate over all
         while success:
             image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)).convert('RGB')
 
@@ -85,6 +98,7 @@ def testing_video(dict_video, batch_mode, psnr_plot):
             lr = hr.resize((hr.width // scale, hr.height // scale), resample=pil_image.BICUBIC)
             bicubic = lr.resize((lr.width * scale, lr.height * scale), resample=pil_image.BICUBIC)
 
+            # Preprocess to tensors
             hr, _ = preprocess(hr, device)
             lr, _ = preprocess(lr, device)
             bc, _ = preprocess(bicubic, device)
@@ -98,7 +112,7 @@ def testing_video(dict_video, batch_mode, psnr_plot):
             bc_psnr[count] = calc_psnr(hr, bc)
             count+=1
             
-
+            # Convert back to image (frame)
             espcn_out = espcn_out.mul(255.0).cpu().numpy().squeeze(0).squeeze(0)
 
             output = np.array([espcn_out, ycbcr[..., 1], ycbcr[..., 2]]).transpose([1, 2, 0])
@@ -112,9 +126,10 @@ def testing_video(dict_video, batch_mode, psnr_plot):
             espcn_videoWriter.write(espcn_img)
             bic_videoWriter.write(bic_img)
             
-            # next frame
+            # Next frame
             success, frame = videoCapture.read()
         
+        # Conditionally plot PSNR and save them in the output directory (one plot per video)
         if psnr_plot:
             x= np.arange(1, len(espcn_psnr)+1, dtype=int)
         
@@ -129,4 +144,5 @@ def testing_video(dict_video, batch_mode, psnr_plot):
 
             plt.savefig(out_path + video_name.split('.')[0] + '_psnr_plot.png')
     
+    # Show all plots together 
     plt.show() if psnr_plot else None

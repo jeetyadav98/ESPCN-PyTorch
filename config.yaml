@@ -1,4 +1,13 @@
-# Configuration file ESPCN 
+# Configuration file for ESPCN-PyTorch
+
+# Nested dictionary contains configuration values for all modes. 
+# When using a mode, edit configuration values according to your data/ directory
+# Modes:
+#     training: trains the network
+#     test image: process image(s); Batch mode for entire directories.
+#     test video: process video(s); Batch mode for entire directories.
+#     visualize filters: plots filter visualizations for each convolutional layer and saves them
+
 
 training:
 
@@ -16,16 +25,16 @@ training:
 test image:
   weights file: 'data/weights/x3/best.pth'
   scale: 3
-  image dir: 'data/DIV2K_valid_HR'
-  # name inside images dir : file mode - process one file
+  image dir: 'data/images'
+  # if using batch mode (-b, --batch), then image file is ignored
   image file: 'baboon.bmp'
   
 test video:
   weights file: 'data/weights/x3/best.pth'
   scale: 3
-  video dir: 'data/videos'
-  #name inside video dir : file mode - process one file  
-  video file: 'vid1.mp4'
+  video dir: 'data/xiph-videos'
+  # if using batch mode (-b, --batch), then image file is ignored
+  video file: 'bus_cif.avi'
 
 visualize filters:
   weights file: 'data/weights/x3/best.pth'
