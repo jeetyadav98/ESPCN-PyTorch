@@ -5,7 +5,7 @@ This repository is implementation of the ["Real-Time Single Image and Video Supe
 In simple terms, this neural network increases the resolution of images/videos while preserving the Peak Signal to Noise Ratio (PSNR) as much as possible. Although this is training capable, pre-trained weights are provided for immediate use. Details about usage, datasets, results etc are given below.
 <center><img src="./thumbnails/layers.png" alt= "filter" width= "1000"></center>
 
-## Table of Contents
+<!-- ## Table of Contents
 1. [Installation](##1.-installation)
 2. [Usage](##2.-usage)
     2.1 [Training/Testing](###2.1-training/testing)
@@ -14,8 +14,8 @@ In simple terms, this neural network increases the resolution of images/videos w
     2.4 [Datasets](###2.4-datasets)
 3. [Results](##3.-results)
     3.1 [Image Testing](###3.1-image-testing)
-    3.1 [Video Testing](###3.1-video-testing)
-    
+    3.1 [Video Testing](###3.1-video-testing) -->
+
 ## 1. Installation
 To clone and install the requirements, run the following commands in your target directory.
 
