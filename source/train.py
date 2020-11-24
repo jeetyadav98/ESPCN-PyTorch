@@ -15,7 +15,16 @@ from source.utils import AverageMeter, calc_psnr
 
 
 def training(dict_train):
+    """ Train the model
 
+    Trains the model using training and eval datasets. Output directory contains all weights marked by epoch number. The weights corresponding to the smallest lost value are saved as 'best.pth'. The script displays a progressbar and psnr values for each epoch as its running.
+
+    :param dict_train: dictionary containing all configuration values for training
+    :return: None
+    
+    """
+
+    # Configuration values from input dictionary
     train_file= dict_train['training file']
     eval_file= dict_train['eval file']
     outputs_dir= dict_train['output dir']
@@ -30,14 +39,13 @@ def training(dict_train):
 
     if not os.path.exists(outputs_dir):
         os.makedirs(outputs_dir)
-
-    cudnn.benchmark = True
     
-    # device = torch.device('cuda:0')
-    device = torch.device('cpu')
+    cudnn.benchmark = True
+    device = torch.device('cpu')    # OR device = torch.device('cuda:0')
 
     torch.manual_seed(seed)
 
+    # Define model object, eval criterion and optimizer
     model = ESPCN(scale_factor=scale).to(device)
     criterion = nn.MSELoss()
     optimizer = optim.Adam([
@@ -45,12 +53,14 @@ def training(dict_train):
         {'params': model.last_part.parameters(), 'lr': lr * 0.1}
     ], lr=lr)
 
+    # Load training data
     train_dataset = TrainDataset(train_file)
     train_dataloader = DataLoader(dataset=train_dataset,
                                   batch_size=batch_size,
                                   shuffle=True,
                                   num_workers=num_workers,
                                   pin_memory=True)
+    # Load eval data
     eval_dataset = EvalDataset(eval_file)
     eval_dataloader = DataLoader(dataset=eval_dataset, batch_size=1)
 
@@ -58,10 +68,12 @@ def training(dict_train):
     best_epoch = 0
     best_psnr = 0.0
 
+    # Iterate over epochs
     for epoch in range(num_epochs):
         for param_group in optimizer.param_groups:
             param_group['lr'] = lr * (0.1 ** (epoch // int(num_epochs * 0.8)))
 
+        # Training
         model.train()
         epoch_losses = AverageMeter()
 
@@ -88,7 +100,8 @@ def training(dict_train):
                 t.update(len(inputs))
 
         torch.save(model.state_dict(), os.path.join(outputs_dir, 'epoch_{}.pth'.format(epoch)))
-
+        
+        # Evaluation
         model.eval()
         epoch_psnr = AverageMeter()
 
@@ -105,6 +118,7 @@ def training(dict_train):
 
         print('eval psnr: {:.2f}'.format(epoch_psnr.avg))
 
+        # Update best psnr value
         if epoch_psnr.avg > best_psnr:
             best_epoch = epoch
             best_psnr = epoch_psnr.avg

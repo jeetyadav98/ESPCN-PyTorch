@@ -4,21 +4,30 @@ from torch import nn
 
 class ESPCN(nn.Module):
     def __init__(self, scale_factor, num_channels=1):
-        super(ESPCN, self).__init__()
-        self.first_part = nn.Sequential(
-            nn.Conv2d(num_channels, 64, kernel_size=5, padding=5//2),
-            nn.Tanh(),
-            nn.Conv2d(64, 32, kernel_size=3, padding=3//2),
-            nn.Tanh(),
-        )
-        self.last_part = nn.Sequential(
-            nn.Conv2d(32, num_channels * (scale_factor ** 2), kernel_size=3, padding=3 // 2),
-            nn.PixelShuffle(scale_factor)
-        )
+        """ ESPCN Constructor
 
+        Initializes the weights and layers of neural network
+
+        :param scale_factor: Value to scale images/videos by
+        :param num_channels: number of channels (default 1)
+        :return: None
+
+        """
+
+        super(ESPCN, self).__init__()
+        self.first_part = self.get_first_part(scale_factor, num_channels)
+        self.last_part = self.get_last_part(scale_factor, num_channels)
         self._initialize_weights()
 
     def _initialize_weights(self):
+        """ Initialize weights
+
+        Private function to initialize weights. Executes once when ESPCN object is made.
+
+        :return: None
+
+        """
+
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 if m.in_channels == 32:
@@ -29,8 +38,40 @@ class ESPCN(nn.Module):
                     nn.init.zeros_(m.bias.data)
 
     def forward(self, x):
+        """ Feed Forward
+
+        :param x: input data
+        :return: output data after passing through the network
+
+        """
+
         x = self.first_part(x)
         x = self.last_part(x)
         return x
 
+    def get_first_part(self, scale_factor, num_channels):
+        """ Get first part of the network
 
+        :return: nn.Sequential
+
+        """
+
+        x=  nn.Sequential(
+            nn.Conv2d(num_channels, 64, kernel_size=5, padding=5//2),
+            nn.Tanh(),
+            nn.Conv2d(64, 32, kernel_size=3, padding=3//2),
+            nn.Tanh(),
+            )
+        return x
+
+    def get_last_part(self, scale_factor, num_channels):
+        """ Get last part of the network
+
+        :return: nn.Sequential
+
+        """
+        x=  nn.Sequential(
+            nn.Conv2d(32, num_channels * (scale_factor **2), kernel_size=3, padding=3 // 2),
+            nn.PixelShuffle(scale_factor)
+            )
+        return x
