@@ -16,7 +16,7 @@ training:
 test image:
   weights file: 'data/weights/x3/best.pth'
   scale: 3
-  image dir: 'data/images'
+  image dir: 'data/DIV2K_valid_HR'
   # name inside images dir : file mode - process one file
   image file: 'baboon.bmp'
   

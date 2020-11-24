@@ -84,6 +84,7 @@ if __name__ == "__main__":
     parser.add_argument('-vi','--test-video', dest= 'test_video', default=None, action='store_true', help= 'test a video using ESPCN')
     parser.add_argument('-b','--batch', dest= 'batch_mode', default=None, action='store_true', help= 'process entire directory of images/videos')
     parser.add_argument('-v','--vis-filters', dest= 'vis_filters', default=None, action='store_true', help= 'visualize filters of each conv layer')
+    parser.add_argument('-p','--plot', dest= 'plot', default=None, action='store_true', help= 'plot psnr for image batches or videos')
     args = parser.parse_args()
     
     with open(args.config_file) as f:
@@ -98,6 +99,6 @@ if __name__ == "__main__":
 
     training(config_dict['training']) if args.train else None
     
-    testing_image(config_dict['test image'], args.batch_mode) if args.test_image else None
-    
-    testing_video(config_dict['test video'], args.batch_mode) if args.test_video else None
+    testing_image(config_dict['test image'], args.batch_mode, args.plot) if args.test_image else None
+
+    testing_video(config_dict['test video'], args.batch_mode, args.plot) if args.test_video else None

@@ -8,13 +8,14 @@ import PIL.Image as pil_image
 from PIL import Image
 from torch.autograd import Variable
 from torchvision.transforms import ToTensor
+import matplotlib.pyplot as plt
 
 from source.models import ESPCN
 from source.utils import convert_ycbcr_to_rgb, preprocess, calc_psnr, is_video_file
 import os
 from os import listdir
 
-def testing_video(dict_video, batch_mode):
+def testing_video(dict_video, batch_mode, psnr_plot):
 
     weights_file= dict_video['weights file']
     scale= dict_video['scale']
@@ -58,6 +59,7 @@ def testing_video(dict_video, batch_mode):
         fps = videoCapture.get(cv2.CAP_PROP_FPS)
         width= (int(videoCapture.get(cv2.CAP_PROP_FRAME_WIDTH))// scale )*scale 
         height= (int(videoCapture.get(cv2.CAP_PROP_FRAME_HEIGHT))//scale )*scale
+        frame_count = int(videoCapture.get(cv2.CAP_PROP_FRAME_COUNT))
 
         # Constructing videowriter objects for bicubic and espcn outputs
 
@@ -69,9 +71,10 @@ def testing_video(dict_video, batch_mode):
 
         # Read frame from video
         success, frame = videoCapture.read()
-        espcn_psnr= 0.
-        bc_psnr= 0.
-        count= 0.
+        espcn_psnr= np.zeros(frame_count)
+        bc_psnr= np.zeros(frame_count)
+        count= 0
+
         while success:
             image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)).convert('RGB')
 
@@ -91,9 +94,9 @@ def testing_video(dict_video, batch_mode):
                 espcn_out = model(lr).clamp(0.0, 1.0)
 
             # PSNR Values
-            espcn_psnr += calc_psnr(hr, espcn_out)
-            bc_psnr += calc_psnr(hr, bc)
-            count +=1
+            espcn_psnr[count] = calc_psnr(hr, espcn_out)
+            bc_psnr[count] = calc_psnr(hr, bc)
+            count+=1
             
 
             espcn_out = espcn_out.mul(255.0).cpu().numpy().squeeze(0).squeeze(0)
@@ -112,9 +115,18 @@ def testing_video(dict_video, batch_mode):
             # next frame
             success, frame = videoCapture.read()
         
-        espcn_psnr= espcn_psnr/count
-        bc_psnr= bc_psnr/count
+        if psnr_plot:
+            x= np.arange(1, len(espcn_psnr)+1, dtype=int)
+        
+            plt.figure(figsize=(10, 7))
+            plt.plot(x, espcn_psnr)
+            plt.plot(x,bc_psnr)
+            plt.title(video_name + ': PSNR versus frame number')
+            plt.legend(['ESPCN  (Average: '+ '{:.2f}'.format(np.mean(espcn_psnr)) + ' dB)', 'Bicubic (Average: '+ '{:.2f}'.format(np.mean(bc_psnr)) + ' dB)'])
+            plt.xlabel('Frame number')
+            plt.ylabel('PSNR (dB)')
+            plt.axis([0, len(x), 0, 60])
 
-        print('\n'+video_name)
-        print('Average PSNR ESPCN    : {:.2f}'.format(espcn_psnr))
-        print('Average PSNR Bicubic  : {:.2f}\n'.format(bc_psnr))
+            plt.savefig(out_path + video_name.split('.')[0] + '_psnr_plot.png')
+    
+    plt.show() if psnr_plot else None
