@@ -108,8 +108,8 @@ The 91-image, Set5 dataset converted to HDF5 can be downloaded from the links be
 
 ## 3. Results
 ### 3.1 Image testing
-The [Timofte](https://data.vision.ee.ethz.ch/cvl/DIV2K/) HR eval dataset (100 images) was used for testing. The following graph shows PSNR vs image number, along with average PSNR. Note that the variability in PSNR is due to the vastly different nature of the images.
-<center><img src="./thumbnails/div2k_psnr_batchplot.png" alt= "filter" width= "800"></center>
+The [Timofte](https://data.vision.ee.ethz.ch/cvl/DIV2K/) Set5 (5 images) was used for testing. The following graph shows PSNR vs image number, along with average PSNR. Note that the variability in PSNR is due to the vastly different nature of the images.
+<center><img src="./thumbnails/set5_psnr_sigmoid.png" alt= "filter" width= "800"></center>
 Shown below are results for a few sample images which demonstrate better performance versus simple bicubic interpolation.
 
 <table>
@@ -136,13 +136,13 @@ Shown below are results for a few sample images which demonstrate better perform
     </tr>
     <tr>
     	<td>
-    		<center><img src="./thumbnails/baboon.bmp" width=300></center>
+    		<center><img src="./thumbnails/butterfly.png" width=300></center>
     	</td>
     	<td>
-    		<center><img src="./thumbnails/baboon_bicubic_x3.bmp" width=300></center>
+    		<center><img src="./thumbnails/butterfly_bicubic_x3.png" width=300></center>
     	</td>
     	<td>
-    		<center><img src="./thumbnails/baboon_espcn_x3.bmp" width=300></center>
+    		<center><img src="./thumbnails/butterfly_espcn_x3.png" width=300></center>
     	</td>
     </tr> 
     <tr>
@@ -165,5 +165,5 @@ Shown below are results for a few sample images which demonstrate better perform
 
 ### 3.2 Video Testing
 [Xiph](https://media.xiph.org) datasets were used to test videos. These are processed frame by frame in a similar manner to images. Shown below is the PSNR plot for a sample video from that dataset.
-<center><img src="./thumbnails/xiph_akiyo_psnr_plot.png" alt= "filter" width= "800"></center>
+<center><img src="./thumbnails/duck_take_off_1080p_psnr_plot.png" alt= "filter" width= "800"></center>
 
