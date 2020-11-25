@@ -5,16 +5,21 @@ This repository is implementation of the ["Real-Time Single Image and Video Supe
 In simple terms, this neural network increases the resolution of images/videos while preserving the Peak Signal to Noise Ratio (PSNR) as much as possible. Although this is training capable, pre-trained weights are provided for immediate use. Details about usage, datasets, results etc are given below.
 <center><img src="./thumbnails/layers.png" alt= "filter" width= "1000"></center>
 
-<!-- ## Table of Contents
-1. [Installation](##1.-installation)
-2. [Usage](##2.-usage)
-    2.1 [Training/Testing](###2.1-training/testing)
-    2.2 [Filter visualization](###2.2-filter-visualization)
-    2.3 [Weights](###2.3-weights)
-    2.4 [Datasets](###2.4-datasets)
-3. [Results](##3.-results)
-    3.1 [Image Testing](###3.1-image-testing)
-    3.1 [Video Testing](###3.1-video-testing) -->
+
+Table of Contents
+=================
+
+   * [ESPCN-PyTorch](#espcn-pytorch)
+      * [1. Installation](#1-installation)
+      * [2. Usage](#2-usage)
+         * [2.1 Training/Testing](#21-trainingtesting)
+         * [2.2 Filter Visualization](#22-filter-visualization)
+         * [2.3 Weights](#23-weights)
+         * [2.4 Datasets](#24-datasets)
+      * [3. Results](#3-results)
+         * [3.1 Image testing](#31-image-testing)
+         * [3.2 Video Testing](#32-video-testing)
+
 
 ## 1. Installation
 To clone and install the requirements, run the following commands in your target directory.
@@ -67,13 +72,13 @@ visualize filters:
 ### 2.1 Training/Testing
 Configuration values for Training, Testing Images, Testing Videos are taken from ```config.yaml``` as shown above. 
 
-```python3 main.py --train```
+```python3 main.py --train```\
 The model is trained using the train and eval datasets. Both are required to be in .h5 format. These datasets, as well as usage of ```prepare.py``` on making custom datasets is given [here](###2.4-datasets).
 
-```python3 main.py --test-image```
+```python3 main.py --test-image```\
 The above command processes a singular image whose location is mentioned in the configuration file. ```--batch``` and ```--plot``` can additionally be given as arguments to process an entire directory, and plot the psnr values of all the processed images, respectively. The outputs are stored in an adjacent directory.
 
-```python3 main.py --test-video```
+```python3 main.py --test-video```\
 Similar usage to image testing. The ```--plot``` option instead plots over all the frames in a single video. If used in combination with ```--batch```, one plot per video is generated, which is saved in the output directory.
 
 ### 2.2 Filter Visualization
