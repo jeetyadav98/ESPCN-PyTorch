@@ -6,3 +6,4 @@ matplotlib>=3.3.0
 tqdm>=4.51.0
 pillow>=7.0.0
 h5py>=3.0.0
+pyyaml>=5.3.1
