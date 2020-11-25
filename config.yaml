@@ -25,16 +25,16 @@ training:
 test image:
   weights file: 'data/weights/x3/best.pth'
   scale: 3
-  image dir: 'data/images'
+  image dir: 'data/Set5'
   # if using batch mode (-b, --batch), then image file is ignored
-  image file: 'baboon.bmp'
+  image file: 'butterfly.png'
   
 test video:
   weights file: 'data/weights/x3/best.pth'
   scale: 3
   video dir: 'data/xiph-videos'
-  # if using batch mode (-b, --batch), then image file is ignored
-  video file: 'bus_cif.avi'
+  # if using batch mode (-b, --batch), then video file is ignored
+  video file: 'ducks_take_off_1080p.avi'
 
 visualize filters:
   weights file: 'data/weights/x3/best.pth'
