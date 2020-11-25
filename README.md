@@ -1,6 +1,6 @@
 # ESPCN-PyTorch
 
-This repository is implementation of the ["Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network"](https://arxiv.org/abs/1609.05158). It was implemented in Python3, and trained/tested on a CPU. This was possible due to the relatively low computational cost compared to other super-resolution CNN's. 
+This repository is the implementation of the ["Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network"](https://arxiv.org/abs/1609.05158). It was implemented in Python3, and trained/tested on a CPU. This was possible due to the relatively low computational cost compared to other super-resolution CNN's. 
 
 In simple terms, this neural network increases the resolution of images/videos while preserving the Peak Signal to Noise Ratio (PSNR) as much as possible. Although this is training capable, pre-trained weights are provided for immediate use. Details about usage, datasets, results etc are given below.
 <center><img src="./thumbnails/layers.png" alt= "filter" width= "1000"></center>
@@ -25,9 +25,9 @@ Table of Contents
 To clone and install the requirements, run the following commands in your target directory.
 
 ```bash
-git clone https://github.com/jeetyadav98/ESPCN-PyTorch.git
-cd ESPCN-PyTorch
-pip3 install -r requirements.txt
+$ git clone https://github.com/jeetyadav98/ESPCN-PyTorch.git
+$ cd ESPCN-PyTorch
+$ pip3 install -r requirements.txt
 ```
 
 ## 2. Usage
@@ -37,7 +37,7 @@ Run ```python3 main.py --help``` for the description for all command line argume
 
 The config file is a nested dictionary for easy editing and maintenance. Run the following to print the contents to the console for inspection. Each sub dictionary corresponds to only one operation.
 ```bash
-~python3 main.py --print-config
+$ python3 main.py --print-config
 ```
 ```
 training:
@@ -72,13 +72,13 @@ visualize filters:
 ### 2.1 Training/Testing
 Configuration values for Training, Testing Images, Testing Videos are taken from ```config.yaml``` as shown above. 
 
-```python3 main.py --train```\
-The model is trained using the train and eval datasets. Both are required to be in .h5 format. These datasets, as well as usage of ```prepare.py``` on making custom datasets is given [here](###2.4-datasets).
+```$ python3 main.py --train```\
+The model is trained using the train and eval datasets. Both are required to be in .h5 format. These datasets, as well as usage of ```prepare.py``` on making custom datasets is given [here](###24-datasets).
 
-```python3 main.py --test-image```\
+```$ python3 main.py --test-image```\
 The above command processes a singular image whose location is mentioned in the configuration file. ```--batch``` and ```--plot``` can additionally be given as arguments to process an entire directory, and plot the psnr values of all the processed images, respectively. The outputs are stored in an adjacent directory.
 
-```python3 main.py --test-video```\
+```$ python3 main.py --test-video```\
 Similar usage to image testing. The ```--plot``` option instead plots over all the frames in a single video. If used in combination with ```--batch```, one plot per video is generated, which is saved in the output directory.
 
 ### 2.2 Filter Visualization
@@ -95,7 +95,7 @@ Filters for each convolutional layer can be visualized by passing the ```--filte
 </table>
 
 ### 2.3 Weights
-Pre-trained weights can be downloaded from the [here](https://www.dropbox.com/s/2fl5jz5nw9oiw1f/espcn_x3.pth?dl=0). After downloading, simply specify their path in the configuration file for usage.
+Pre-trained weights (for scale=3) can be downloaded from the [here](https://drive.google.com/file/d/1mQVuzaL6q9nEyDMah42VyULZcnhgGPG5/view?usp=sharing). After downloading, simply specify their path in the configuration file for usage.
 
 ### 2.4 Datasets
 
@@ -103,8 +103,8 @@ The 91-image, Set5 dataset converted to HDF5 can be downloaded from the links be
 
 | Dataset | Scale | Type | Link |
 |---------|-------|------|------|
-| 91-image | 3 | Train | [Download](https://www.dropbox.com/s/4mv1v4qfjo17zg3/91-image_x3.h5?dl=0) |
-| Set5 | 3 | Eval | [Download](https://www.dropbox.com/s/9qlb94in1iqh6nf/Set5_x3.h5?dl=0) |
+| 91-image | 3 | Train | [Download](https://drive.google.com/file/d/1PwIzXeFIz_1ghezcx-a1VLtDcuMY3ZjH/view?usp=sharing) |
+| Set5 | 3 | Eval | [Download](https://drive.google.com/file/d/1Nhs3n60wAIsNsMfDqhlIw2z0U6fW9I9W/view?usp=sharing) |
 
 ## 3. Results
 ### 3.1 Image testing
